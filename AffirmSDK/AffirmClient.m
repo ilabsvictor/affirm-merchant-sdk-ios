@@ -76,7 +76,24 @@
     id typeValue = [responseObject valueForKey:@"type"];
     NSString *type = (typeValue == nil || [typeValue isEqual:[NSNull null]]) ? @"" : typeValue;
     
-    return [[AffirmErrorResponse alloc] initWithMessage:message code:code field:field type:type statusCode:statusCode];
+    AffirmErrorUI *ui = nil;
+    id uiValue = [responseObject valueForKey:@"ui"];
+    if ([uiValue isKindOfClass:[NSDictionary class]]) {
+        NSDictionary *uiDictionary = (NSDictionary *)uiValue;
+        
+        id mainValue = uiDictionary[@"main"];
+        NSString *main = (mainValue == nil || [mainValue isEqual:[NSNull null]]) ? nil : mainValue;
+        
+        id subValue = uiDictionary[@"sub"];
+        NSString *sub = (subValue == nil || [subValue isEqual:[NSNull null]]) ? nil : subValue;
+        
+        id subExtraValue = uiDictionary[@"sub_extra"];
+        NSArray<NSString *> *subExtra = [subExtraValue isKindOfClass:[NSArray class]] ? subExtraValue : nil;
+        
+        ui = [[AffirmErrorUI alloc] initWithMain:main sub:sub subExtra:subExtra];
+    }
+    
+    return [[AffirmErrorResponse alloc] initWithMessage:message code:code field:field type:type statusCode:statusCode ui:ui];
 }
 
 @end
