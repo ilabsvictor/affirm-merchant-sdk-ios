@@ -35,6 +35,7 @@
 {
     [self clearCookies];
     
+    // Affirm promo web copy changed; the CTA now contains "See" instead of "Learn more".
     XCUIElement *alaElement = [self.app.buttons softMatchingWithSubstring:@"See"];
     [self waitForElement:alaElement duration:10];
     XCTAssertTrue(alaElement.exists);

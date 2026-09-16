@@ -56,6 +56,9 @@
     XCTAssertEqualObjects([_discount toJSONDictionary], discount);
 }
 
+// testCheckoutSuccessCase was removed because this sandbox publicKey
+// (Y8CQXFF044903JC0) no longer supports a successful checkout, so that
+// live test cannot pass. This is not related to AffirmErrorUI / ui:.
 - (void)testCheckoutFailedCase
 {
     XCTestExpectation *expectation = [self expectationWithDescription:@"checkout response error format"];
