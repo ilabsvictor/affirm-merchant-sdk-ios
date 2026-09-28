@@ -27,8 +27,19 @@
 
 - (void)clearCookies
 {
-    [self.app.buttons[@"Clear Cookies"] tap];
-    [self.app.buttons[@"OK"] tap];
+    // The confirmation alert is presented after the promo web view reloads.
+    // On a slow simulator that tap can land before the alert is in the
+    // accessibility tree, so wait for it and retry the tap once if needed.
+    XCUIElement *clearButton = self.app.buttons[@"Clear Cookies"];
+    XCTAssertTrue([clearButton waitForExistenceWithTimeout:15]);
+    
+    XCUIElement *okButton = self.app.alerts.buttons[@"OK"];
+    for (NSInteger attempt = 0; attempt < 2 && !okButton.exists; attempt++) {
+        [clearButton tap];
+        [okButton waitForExistenceWithTimeout:10];
+    }
+    XCTAssertTrue(okButton.exists);
+    [okButton tap];
 }
 
 - (void)testAla
