@@ -33,7 +33,7 @@
     _item = [AffirmItem itemWithName:@"Affirm Test Item" SKU:@"test_item" unitPrice:[NSDecimalNumber decimalNumberWithString:@"15.00"] quantity:1 URL:[NSURL URLWithString:@"http://sandbox.affirm.com/item"]];
     _shipping = [AffirmShippingDetail shippingDetailWithName:@"Test Tester" addressWithLine1:@"325 Pacific Ave." line2:@"" city:@"San Francisco" state:@"CA" zipCode:@"94111" countryCode:@"USA"];
     _discount = [AffirmDiscount discountWithName:@"Affirm Test Discount" amount:[NSDecimalNumber decimalNumberWithString:@"3.00"]];
-    _checkout = [AffirmCheckout checkoutWithItems:@[_item] shipping:_shipping taxAmount:[NSDecimalNumber decimalNumberWithString:@"1.00"] shippingAmount:[NSDecimalNumber decimalNumberWithString:@"5.00"]];
+    _checkout = [AffirmCheckout checkoutWithItems:@[_item] shipping:_shipping taxAmount:[NSDecimalNumber decimalNumberWithString:@"50.00"] shippingAmount:[NSDecimalNumber decimalNumberWithString:@"5.00"]];
 }
 
 - (void)testAffirmItem {
@@ -56,9 +56,32 @@
     XCTAssertEqualObjects([_discount toJSONDictionary], discount);
 }
 
-// testCheckoutSuccessCase was removed because this sandbox publicKey
-// (Y8CQXFF044903JC0) no longer supports a successful checkout, so that
-// live test cannot pass. This is not related to AffirmErrorUI / ui:.
+- (void)testCheckoutSuccessCase
+{
+    XCTestExpectation *expectation = [self expectationWithDescription:@"checkout response error format"];
+    [[AffirmConfiguration sharedInstance] configureWithPublicKey:@"Y8CQXFF044903JC0"
+                                                     environment:AffirmEnvironmentSandbox
+                                                    merchantName:@"Affirm Example"];
+    AffirmCheckoutRequest *request = [[AffirmCheckoutRequest alloc] initWithPublicKey:[AffirmConfiguration sharedInstance].publicKey
+                                                                             checkout:self.checkout
+                                                                               useVCN:NO cardAuthWindow:0];
+    [AffirmCheckoutClient send:request handler:^(AffirmResponse *  _Nullable response, NSError * _Nonnull error) {
+        XCTAssertTrue([response isKindOfClass:[AffirmCheckoutResponse class]]);
+        XCTAssertNil(error);
+        [expectation fulfill];
+    }];
+    [self waitForExpectationsWithTimeout:10 handler:nil];
+}
+
+- (void)testCheckoutResponseParse
+{
+    NSString *jsonString = @"{\"redirect_url\":\"https://sandbox.affirm.com/products/checkout?checkout_ari=TEST\",\"checkout_id\":\"TEST\"}";
+    AffirmResponse *response = [AffirmCheckoutResponse parse:[jsonString dataUsingEncoding:NSUTF8StringEncoding]];
+    XCTAssertTrue([response isKindOfClass:[AffirmCheckoutResponse class]]);
+    AffirmCheckoutResponse *checkoutResponse = (AffirmCheckoutResponse *)response;
+    XCTAssertEqualObjects(checkoutResponse.redirectURL.absoluteString, @"https://sandbox.affirm.com/products/checkout?checkout_ari=TEST");
+}
+
 - (void)testCheckoutFailedCase
 {
     XCTestExpectation *expectation = [self expectationWithDescription:@"checkout response error format"];
